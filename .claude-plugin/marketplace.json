@@ -1,0 +1,19 @@
+{
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    "name": "moonlets",
+    "description": "The moonlets Claude Code plugin — slash commands, hook ingestion, and statusline for the moonlets cosmic-creature companion.",
+    "owner": {
+        "name": "moonlets"
+    },
+    "plugins": [
+        {
+            "name": "moonlets",
+            "description": "Slash commands (/moonlets:status, /moonlets:switch, /moonlets:roster, /moonlets:setup), hook script that ships Claude Code tool events to moonlets, and a statusline that shows your active moonlet's level + XP.",
+            "author": {
+                "name": "moonlets"
+            },
+            "category": "productivity",
+            "source": "./moonlets"
+        }
+    ]
+}

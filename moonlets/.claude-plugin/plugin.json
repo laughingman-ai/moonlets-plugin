@@ -1,0 +1,7 @@
+{
+    "name": "moonlets",
+    "description": "Cosmic creature companion for your Claude Code sessions. /moonlets status, /moonlets switch, /moonlets roster — and more as features land.",
+    "author": {
+        "name": "moonlets"
+    }
+}
