@@ -18,15 +18,16 @@ You'll need a moonlets account first — sign up at
 [moonlets.laughingman.ai](https://moonlets.laughingman.ai) and pick a
 starter.
 
-Then add the plugin in any Claude Code session:
+Then in any Claude Code session:
 
 ```
-/plugin marketplace add moonlets <marketplace-url>
-/plugin install moonlets
+/plugin marketplace add laughingman-ai/moonlets-plugin
+/plugin install moonlets@moonlets
+/moonlets:setup
 ```
 
 The plugin needs two env vars to talk to the moonlets server. Grab them
-from your dashboard's **Hook setup** section and add to your shell rc:
+from your dashboard's **Setup** section and add to your shell rc:
 
 ```bash
 export MOONLETS_USER_ID="..."        # from dashboard
@@ -35,8 +36,9 @@ export MOONLETS_HOOK_SECRET="..."    # from dashboard
 # export MOONLETS_BASE_URL="https://moonlets.laughingman.ai"
 ```
 
-These are the same vars `moonlets-hook.sh` and `moonlets-statusline.sh`
-use, so if you already wired those up, you're done — no extra setup.
+These are the same vars the hook and statusline scripts use, so if you
+already had those wired up before installing the plugin, you're done —
+no extra setup.
 
 ## How it works
 
@@ -67,5 +69,5 @@ Then `/plugin install` it from the local checkout instead of the
 marketplace:
 
 ```
-/plugin marketplace add file://path/to/moonlets/plugin
+/plugin marketplace add /path/to/moonlets-plugin-checkout
 ```
