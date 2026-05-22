@@ -26,13 +26,15 @@ the main statusLine, so this command writes the config for the user.
    overwriting — they may have a tool like Powerline configured.
 
 5. **Write the config.** Update `settings.statusLine` to:
-   ```json
-   {
-     "type": "command",
-     "command": "<resolved-absolute-path>"
-   }
-   ```
-   Preserve every other key in `settings.json` — only touch `statusLine`.
+
+    ```json
+    {
+        "type": "command",
+        "command": "<resolved-absolute-path>"
+    }
+    ```
+
+    Preserve every other key in `settings.json` — only touch `statusLine`.
 
 6. **Confirm.** Print a one-line confirmation: "Statusline active —
    restart your Claude Code session to see it." Don't suggest any other
