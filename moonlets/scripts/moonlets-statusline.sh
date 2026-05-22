@@ -22,6 +22,7 @@ cat >/dev/null   # consume Claude Code's stdin payload
 CACHE_TTL_S=10
 CHIP_TTL_S=6                    # how long the "+N XP" chip lingers after a positive delta
 CLOSE_TO_LEVEL_THRESHOLD=20     # show "N to L{next}" when toNext <= this
+SPRITE_FRAME_S=4                # wall-clock seconds per sprite frame
 CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/moonlets-status.json"
 mkdir -p "$(dirname "$CACHE_FILE")"
 
@@ -164,7 +165,68 @@ RESET=$'\033[0m'
 DIM=$'\033[2m'
 BOLD=$'\033[1m'
 
-GLYPH_PART="${COLOR}${GLYPH}${RESET}"
+# Per-species sprite cycle: 30 species × 4 frames each. Frames are picked
+# off wall-clock time, not Claude Code's refresh count — so the creature's
+# apparent cadence is constant across refresh patterns. Frame index =
+# floor(NOW / SPRITE_FRAME_S) mod 4. With SPRITE_FRAME_S=4 the full cycle
+# completes every 16 seconds. The frame array is per-species; new or
+# unmapped species fall through to a static repeat of the domain glyph.
+#
+# All glyphs are single-cell Unicode from the Geometric Shapes and Misc
+# Symbols blocks — no emoji, no 2-cell width, no font requirement beyond
+# what every modern terminal already has.
+case "$SLUG" in
+    # Library — deer / archive scholars
+    inkfawn)       FRAMES=('◆' '◇' '◆' '◈') ;;  # ink dab
+    codex)         FRAMES=('◈' '◆' '◈' '◇') ;;  # page turn
+    tomelyx)       FRAMES=('◇' '◈' '◆' '◈') ;;  # stately ruffle
+    caesura)       FRAMES=('◆' '·' '◆' '·') ;;  # halting pulse
+    greppat)       FRAMES=('·' '◆' '◇' '·') ;;  # margin scurry
+    bytenibble)    FRAMES=('◇' '·' '◆' '·') ;;  # nibble pause
+
+    # Hearth — fire / electric
+    echolet)       FRAMES=('▲' '★' '▲' '✦') ;;  # bark echo
+    sparkpaw)      FRAMES=('▲' '▴' '△' '▴') ;;  # spark hop
+    volticene)     FRAMES=('▲' '✦' '★' '✦') ;;  # radiant aura
+    cinderhare)    FRAMES=('▴' '▲' '▴' '▾') ;;  # hare bound
+
+    # Wilds — flight / navigation
+    querril)       FRAMES=('●' '◐' '○' '◑') ;;  # wing flap
+    mapwing)       FRAMES=('●' '◓' '●' '◒') ;;  # chart tilt
+    astrocartix)   FRAMES=('●' '◐' '○' '◑') ;;  # majestic glide
+    glimmerkit)    FRAMES=('◐' '●' '◑' '●') ;;  # peek
+
+    # Convocation — chime / signal
+    beacling)      FRAMES=('◉' '◎' '◯' '◎') ;;  # pulse out
+    pulsechime)    FRAMES=('◉' '◎' '◉' '◯') ;;  # bell ring
+    oraclyne)      FRAMES=('◉' '◯' '◎' '◯') ;;  # deep call
+    pingpiper)     FRAMES=('◉' '◎' '◉' '◎') ;;  # sonar
+
+    # Crucible — forge / smith
+    slagling)      FRAMES=('★' '✦' '★' '✧') ;;  # smoulder
+    forgeworm)     FRAMES=('✦' '★' '✧' '★') ;;  # heat ripple
+    pyrosmith)     FRAMES=('★' '✦' '✧' '✦') ;;  # strike walk
+    logbeetle)     FRAMES=('★' '·' '✦' '·') ;;  # ledger blink
+    tracebadger)   FRAMES=('·' '★' '✦' '★') ;;  # surface
+
+    # Anvil — stone / strata
+    cobblesling)   FRAMES=('■' '□' '▣' '□') ;;  # settle
+    bedrockoise)   FRAMES=('▣' '■' '▣' '□') ;;  # heavy step
+    stratomass)    FRAMES=('■' '▣' '■' '▣') ;;  # slow march
+    heaptoad)      FRAMES=('□' '■' '□' '▣') ;;  # pile shift
+
+    # Observatory — void / starlight
+    nullbat)       FRAMES=('✦' '·' '✧' '·') ;;  # phase
+    voidsprig)     FRAMES=('◇' '✦' '✧' '✦') ;;  # bloom in nothing
+    astrolarch)    FRAMES=('✦' '✧' '✶' '✧') ;;  # celestial twinkle
+
+    # Unknown species (future-proof): no animation, static domain glyph.
+    *)             FRAMES=("$GLYPH" "$GLYPH" "$GLYPH" "$GLYPH") ;;
+esac
+FRAME_INDEX=$(( (NOW / SPRITE_FRAME_S) % 4 ))
+ANIM_GLYPH="${FRAMES[$FRAME_INDEX]}"
+
+GLYPH_PART="${COLOR}${ANIM_GLYPH}${RESET}"
 LEVEL_PART="${BOLD}L${LEVEL}${RESET}"
 
 # 21-state progress bar: 10 segments × 2 sub-units each. Each sub-unit
