@@ -114,6 +114,9 @@ REQ=$(jq -r '.active.requiredLevelXp' "$CACHE_FILE")
 SLUG=$(jq -r '.active.speciesSlug' "$CACHE_FILE")
 EVO_NAME=$(jq -r '.active.evolvesTo.name // empty' "$CACHE_FILE")
 EVO_AT=$(jq -r '.active.evolvesTo.atLevel // empty' "$CACHE_FILE")
+EGGS_READY=$(jq -r '.eggs.ready // 0' "$CACHE_FILE")
+EGGS_INCUB_ACC=$(jq -r '.eggs.incubating.accumulated // empty' "$CACHE_FILE")
+EGGS_INCUB_REQ=$(jq -r '.eggs.incubating.required // empty' "$CACHE_FILE")
 
 # Map species → domain. Each domain has a monochrome glyph from the
 # Geometric Shapes block (renders in any monospace terminal) and a
@@ -289,12 +292,27 @@ if [ "$LAST_DELTA" -gt 0 ] && [ "$CHIP_AGE" -lt "$CHIP_TTL_S" ]; then
     CHIP="${BOLD}${CHIP_COLOR}+${LAST_DELTA} XP${RESET}  "
 fi
 
+# Sky Nursery — "egg ready" outranks the incubation progress because
+# action items (something the user can click to claim) belong in the
+# foreground. Incubation progress only shows when no ready eggs are
+# queued up.
+NURSERY=""
+if [ "${EGGS_READY:-0}" -gt 0 ]; then
+    if [ "$EGGS_READY" -eq 1 ]; then
+        NURSERY=" ${BOLD}${CHIP_COLOR}◌ 1 egg ready${RESET}"
+    else
+        NURSERY=" ${BOLD}${CHIP_COLOR}◌ ${EGGS_READY} eggs ready${RESET}"
+    fi
+elif [ -n "$EGGS_INCUB_ACC" ] && [ -n "$EGGS_INCUB_REQ" ] && [ "$EGGS_INCUB_REQ" -gt 0 ]; then
+    NURSERY=" ${DIM}·${RESET} ${DIM}egg ${EGGS_INCUB_ACC}/${EGGS_INCUB_REQ}${RESET}"
+fi
+
 if [ "$REQ" -gt 0 ]; then
-    printf '%s%s %s %s %s %s/%s%s%s\n' \
+    printf '%s%s %s %s %s %s/%s%s%s%s\n' \
         "$CHIP" "$GLYPH_PART" "$NAME" "$LEVEL_PART" "$BAR_PART" \
-        "$CUR" "$REQ" "$COUNTDOWN" "$EVOLVE"
+        "$CUR" "$REQ" "$COUNTDOWN" "$EVOLVE" "$NURSERY"
 else
-    printf '%s%s %s %s %s(max)%s%s\n' \
+    printf '%s%s %s %s %s(max)%s%s%s\n' \
         "$CHIP" "$GLYPH_PART" "$NAME" "$LEVEL_PART" \
-        "$BOLD" "$RESET" "$EVOLVE"
+        "$BOLD" "$RESET" "$EVOLVE" "$NURSERY"
 fi
