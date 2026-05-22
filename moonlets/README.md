@@ -1,16 +1,46 @@
 # Moonlets — Claude Code plugin
 
-A cosmic creature companion that grows from your Claude Code sessions. This
-plugin adds slash commands so you never leave your terminal to check on
-your moonlet.
+Creature companions for your Claude Code sessions. Install this plugin and
+every tool call you make earns XP for a creature that lives in your
+statusline. Levels, evolutions, eggs, rituals, trades, battles — all driven
+by your real coding.
 
-## What you get
+**Live:** [moonlets.laughingman.ai](https://moonlets.laughingman.ai)
 
-- `/moonlets:status` — your active moonlet's level + XP toward next level
-- `/moonlets:roster` — every moonlet you own
-- `/moonlets:switch [species]` — switch which moonlet is active. With a
-  species slug (`/moonlets:switch echolet`) it switches immediately; without
-  one, Claude shows your roster and asks which to switch to.
+## What this plugin adds
+
+Three things install in one `/plugin install`:
+
+1. **Hook script** — fires on every Claude Code tool call (PostToolUse,
+   UserPromptSubmit, Stop). HMAC-signs the event with your personal secret
+   and POSTs to the moonlets server, where it scores XP and grows your
+   active moonlet. Privacy-by-design: tool _name_ + success + duration +
+   anonymous session id only; never the command, paths, prompts, output,
+   or transcript.
+
+2. **Animated statusline** — a one-line readout at the bottom of every
+   Claude Code prompt:
+
+    ```
+    ◆ Inkfawn L3 [▓▓▓░░░░░░░] 47/150
+    +5 XP  ◆ Inkfawn L3 [▓▓▓▓░░░░░░] 52/150
+    ◆ Inkfawn L3 [▓▓▓▓▓▓▓▓▓░] 142/150 · 8 to L4
+    ◆ Inkfawn L14 [▓▓▓▓▓▓▓▒░░] 220/280 → Codex
+    ```
+
+    Per-species 4-frame sprite cycle, half-segment bar growth, gold "+N XP"
+    chip when fresh XP lands, evolution + next-level countdowns. Truecolor
+    where supported; 8-bit ANSI fallback everywhere else.
+
+3. **Slash commands** for everything else you'd want to check from inside
+   Claude Code:
+    - `/moonlets:status` — your active moonlet's level + XP toward next level
+    - `/moonlets:roster` — every moonlet you own
+    - `/moonlets:switch [species]` — change which moonlet receives XP. With
+      a species slug it switches immediately; without one, Claude shows
+      your roster and asks.
+    - `/moonlets:setup` — one-time activation of the statusline (writes
+      the right `statusLine` config to `~/.claude/settings.json`).
 
 ## Install
 
@@ -40,22 +70,45 @@ These are the same vars the hook and statusline scripts use, so if you
 already had those wired up before installing the plugin, you're done —
 no extra setup.
 
-## How it works
+## Privacy
 
-The plugin ships a tiny stdio bridge (`scripts/mcp-bridge.mjs`) that signs
-each MCP request with your `MOONLETS_HOOK_SECRET` and forwards it to the
-moonlets server's `/mcp` endpoint. Your secret never leaves your machine —
-only HMAC signatures travel.
+The hook script (`scripts/moonlets-hook.sh`) is short, auditable shell.
+What it sends + what it never sends, every single event:
 
-The server-side MCP server (in the moonlets repo at `src/lib/server/mcp.ts`)
-exposes three tools right now:
+| Sent                                      | Never sent                     |
+| ----------------------------------------- | ------------------------------ |
+| Tool name (`Read`, `Bash`, `Edit`, …)     | Bash command text              |
+| Whether it succeeded                      | File paths                     |
+| How long it took (ms)                     | Your prompts to Claude         |
+| `wasVoid` flag (for the Nullbat ritual)   | Tool output / response         |
+| Opaque session id (groups one Claude run) | Code contents                  |
+| Your moonlets user id                     | Your transcript / chat history |
+| Unix timestamp (replay-window guard)      |                                |
+
+Every request is HMAC-SHA256 signed with `MOONLETS_HOOK_SECRET`. The
+secret stays on your machine; only signatures cross the wire. You can
+rotate it from the dashboard anytime — old signed events stop being
+accepted immediately.
+
+The plugin's slash-command bridge (`scripts/mcp-bridge.mjs`) signs MCP
+requests the same way. Your secret never leaves your machine.
+
+## How it works under the hood
+
+Server-side MCP at `/mcp` (in the moonlets repo at `src/lib/server/mcp.ts`)
+currently exposes three tools the slash commands wrap:
 
 - `moonlets_get_status` — active moonlet + account totals
 - `moonlets_list_my_roster` — all owned moonlets
 - `moonlets_switch_active` — set active by species slug or moonlet ID
 
-More tools will follow as the slash commands grow (trade, battle, codex
-search, etc.).
+More tools (trade, battle, codex search) will follow as the slash
+commands grow.
+
+The full server lives at
+[`MJL40635/moonlets`](https://github.com/MJL40635/moonlets) — this repo
+is the auto-published thin client surface. Backend source, schema, design
+vault, and contribution paths all live there.
 
 ## Local development
 
