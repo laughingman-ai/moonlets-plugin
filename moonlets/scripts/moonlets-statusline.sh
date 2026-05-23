@@ -117,6 +117,8 @@ EVO_AT=$(jq -r '.active.evolvesTo.atLevel // empty' "$CACHE_FILE")
 EGGS_READY=$(jq -r '.eggs.ready // 0' "$CACHE_FILE")
 EGGS_INCUB_ACC=$(jq -r '.eggs.incubating.accumulated // empty' "$CACHE_FILE")
 EGGS_INCUB_REQ=$(jq -r '.eggs.incubating.required // empty' "$CACHE_FILE")
+STREAK_DAYS=$(jq -r '.streak.days // 0' "$CACHE_FILE")
+STREAK_ACTIVE=$(jq -r '.streak.activeToday // false' "$CACHE_FILE")
 
 # Map species → domain. Each domain has a monochrome glyph from the
 # Geometric Shapes block (renders in any monospace terminal) and a
@@ -307,12 +309,26 @@ elif [ -n "$EGGS_INCUB_ACC" ] && [ -n "$EGGS_INCUB_REQ" ] && [ "$EGGS_INCUB_REQ"
     NURSERY=" ${DIM}·${RESET} ${DIM}egg ${EGGS_INCUB_ACC}/${EGGS_INCUB_REQ}${RESET}"
 fi
 
+# Streak tail — surfaces at 2+ days. At day 1 the multi-day framing
+# doesn't quite parse ("1-day streak" implies tomorrow it'll be 2);
+# at zero we skip entirely. ★ in the same gold as the +XP chip when
+# today's activity has landed; dim when it hasn't (a gentle "code
+# today" prompt without being naggy).
+STREAK_TAIL=""
+if [ "${STREAK_DAYS:-0}" -ge 2 ]; then
+    if [ "$STREAK_ACTIVE" = "true" ]; then
+        STREAK_TAIL=" ${CHIP_COLOR}★${STREAK_DAYS}d${RESET}"
+    else
+        STREAK_TAIL=" ${DIM}★${STREAK_DAYS}d${RESET}"
+    fi
+fi
+
 if [ "$REQ" -gt 0 ]; then
-    printf '%s%s %s %s %s %s/%s%s%s%s\n' \
+    printf '%s%s %s %s %s %s/%s%s%s%s%s\n' \
         "$CHIP" "$GLYPH_PART" "$NAME" "$LEVEL_PART" "$BAR_PART" \
-        "$CUR" "$REQ" "$COUNTDOWN" "$EVOLVE" "$NURSERY"
+        "$CUR" "$REQ" "$COUNTDOWN" "$EVOLVE" "$NURSERY" "$STREAK_TAIL"
 else
-    printf '%s%s %s %s %s(max)%s%s%s\n' \
+    printf '%s%s %s %s %s(max)%s%s%s%s\n' \
         "$CHIP" "$GLYPH_PART" "$NAME" "$LEVEL_PART" \
-        "$BOLD" "$RESET" "$EVOLVE" "$NURSERY"
+        "$BOLD" "$RESET" "$EVOLVE" "$NURSERY" "$STREAK_TAIL"
 fi
